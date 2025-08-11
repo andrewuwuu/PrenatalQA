@@ -50,6 +50,10 @@ function extractText(msg) {
   ).trim()
 }
 
+// regex registrasi yang ketat: NAMA#UMUR#USIA_HAMIL#(opsional...) maksimal 6 bagian
+const REGEX_REGISTER = /^[^\n#]+#[0-9]{1,3}#[0-9]{1,3}(#[^#\n]*){0,3}$/i
+const IS_BOT_TEMPLATE = /Halo Bunda! Untuk mulai, daftar dulu/i
+
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState('./auth')
   const { version } = await fetchLatestBaileysVersion()
@@ -110,10 +114,14 @@ async function startBot() {
 
         try {
           // Pendaftaran: NAMA#UMUR#USIA_HAMIL#PENYAKIT#ALERGI#POSYANDU
-          if (body.includes('#') && body.split('#').length >= 3) {
+          const isRegister = REGEX_REGISTER.test(body) && !IS_BOT_TEMPLATE.test(body)
+          if (isRegister) {
+            console.log('[REGISTER]', jid, '=>', body)
             const reply = await registerUser(jid, body)
             sessionHasProfile.add(jid) // tandai agar event duplikat tidak memicu "daftar dulu"
             await sock.sendMessage(jid, { text: reply })
+            // beri jeda kecil agar Apps Script commit & hindari langsung lanjut ke Q&A
+            await new Promise(r => setTimeout(r, 500))
             return
           }
 
@@ -125,6 +133,9 @@ async function startBot() {
           } else {
             profile = await getUserByPhone(jid)
           }
+
+          // 🔎 LOG PROFIL — letakkan tepat sebelum build prompt
+          console.log('[PROFILE]', jid, profile?.phone, profile?.name, profile?.gestation_weeks)
 
           if (profile) {
             const messagesPrompt = buildMessages(profile, body)

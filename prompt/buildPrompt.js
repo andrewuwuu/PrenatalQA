@@ -1,9 +1,20 @@
 const fs = require('fs')
 const path = require('path')
+const qa = fs.readFileSync(path.join(__dirname, 'qaPrompt.md'), 'utf8')
 
-function buildMessages(profile, userText) {
-  const qaPrompt = fs.readFileSync(path.join(__dirname, 'qaPrompt.md'), 'utf8')
-  const systemContent = qaPrompt + `\n\n[PROFIL]\nNama: ${profile.name}\nUsia: ${profile.age}\nUsia hamil: ${profile.gestation_weeks}\nRiwayat: ${profile.conditions}\nAlergi: ${profile.allergies}\nPosyandu: ${profile.posyandu}`
+function safe(v, d='-'){ return (v == null || v === '') ? d : String(v) }
+
+function buildMessages(profile = {}, userText) {
+  const systemContent = `${qa}
+
+[PROFIL]
+Nama: ${safe(profile.name, 'Bunda')}
+Usia: ${safe(profile.age, '?')}
+Usia hamil (minggu): ${safe(profile.gestation_weeks, '?')}
+Riwayat: ${safe(profile.conditions)}
+Alergi: ${safe(profile.allergies)}
+Posyandu: ${safe(profile.posyandu)}`
+
   return [
     { role: 'system', content: systemContent },
     { role: 'user', content: userText }
