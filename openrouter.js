@@ -8,7 +8,7 @@ async function chat(messages) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
+      model: process.env.OPENROUTER_MODEL || 'openai/gpt-5-nano',
       messages,
       temperature: 0.4
     })
