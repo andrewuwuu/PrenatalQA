@@ -23,6 +23,3 @@ logs/
 # Build output
 dist/
 build/
-
-.gitattributes
-.gitignore
